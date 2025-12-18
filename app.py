@@ -22,15 +22,22 @@ create_timetable_table()
 # ---------------- SESSION STATE ----------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
+
 if "username" not in st.session_state:
     st.session_state.username = ""
 
+if "page" not in st.session_state:
+    st.session_state.page = "Full Week Timetable"
+
 # =====================================================
-# 🔐 AUTH SECTION (ONLY WHEN NOT LOGGED IN)
+# 🔐 AUTH SECTION (ONLY WHEN NOT SIGNED IN)
 # =====================================================
 if not st.session_state.logged_in:
 
-    auth_choice = st.sidebar.selectbox("Login / Register", ["Login", "Register"])
+    auth_choice = st.sidebar.selectbox(
+        "Sign In / Register",
+        ["Sign In", "Register"]
+    )
 
     # -------- REGISTER --------
     if auth_choice == "Register":
@@ -43,44 +50,51 @@ if not st.session_state.logged_in:
             if new_user and new_pass:
                 success = add_user(new_user, new_pass)
                 if success:
-                    st.success("✅ Registered successfully! Please login.")
+                    st.success("✅ Registered successfully! Please Sign In.")
                 else:
                     st.error("❌ Username already exists!")
             else:
                 st.warning("⚠️ Enter username and password")
 
-    # -------- LOGIN --------
-    elif auth_choice == "Login":
-        st.subheader("🔐 Login")
+    # -------- SIGN IN --------
+    else:
+        st.subheader("🔐 Sign In")
 
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
 
-        if st.button("Login"):
+        if st.button("Sign In"):
             if verify_user(username, password):
                 st.session_state.logged_in = True
                 st.session_state.username = username
-                st.rerun()   # 🔥 THIS FIXES PAGE NAVIGATION
+                st.session_state.page = "Full Week Timetable"
+                st.experimental_rerun()
             else:
                 st.error("❌ Incorrect username or password")
 
 # =====================================================
-# 🏠 MAIN APP (ONLY AFTER LOGIN)
+# 🏠 MAIN APP (ONLY AFTER SIGN IN)
 # =====================================================
 else:
-    # -------- LOGOUT --------
+    # -------- LOGOUT (MANUAL ONLY) --------
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
         st.session_state.username = ""
-        st.rerun()
+        st.session_state.page = "Full Week Timetable"
+        st.experimental_rerun()
 
     username = st.session_state.username
 
-    # Sidebar menu AFTER login
+    # Sidebar menu AFTER sign in
+    menu_items = ["Home", "Add / Edit Timetable", "Full Week Timetable"]
+
     menu = st.sidebar.selectbox(
         "Menu",
-        ["Home", "Add / Edit Timetable", "Full Week Timetable"]
+        menu_items,
+        index=menu_items.index(st.session_state.page)
     )
+
+    st.session_state.page = menu
 
     user_timetable = get_user_timetable(username)
 
